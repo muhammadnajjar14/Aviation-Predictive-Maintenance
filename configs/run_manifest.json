@@ -1,0 +1,38 @@
+{
+  "timestamp": "Mon Nov 10 14:46:26 2025",
+  "pkl_path": "Final_Run_Outputs/phase1_prepared_data.pkl",
+  "output_dir": "Final_Run_Outputs",
+  "shapes": {
+    "healthy": [
+      8736,
+      2048,
+      23
+    ],
+    "faulty": [
+      30,
+      2048,
+      23
+    ],
+    "test": [
+      26,
+      2048,
+      23
+    ]
+  },
+  "synthesis_params": {
+    "win": 256,
+    "hop": 128,
+    "base_trend_source": "moving_avg_healthy",
+    "residual_source": "bootstrap_crossover_faulty",
+    "composition_version": "v3 (no_shrink, no_bed, psd_match, q95_cal)"
+  },
+  "synthetic_generated": 8706,
+  "classifier_model": "classifier_mc_inference.keras",
+  "scaler": "classifier_scaler.pkl",
+  "final_test_metrics": {
+    "auroc": 0.5976331360946745,
+    "auprc": 0.6666199769641064,
+    "best_f1": 0.687499999517578,
+    "best_thr": 0.0019895194564014673
+  }
+}
