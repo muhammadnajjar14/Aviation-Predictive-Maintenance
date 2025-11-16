@@ -1,177 +1,170 @@
-# Aviation-Predictive-Maintenance
-A reproducible deep-learning pipeline for classifying pre-maintenance flights using NGAFID flight data
+Aviation-Predictive-Maintenance
 
-This repository contains the full workflow used in the paper “A Hybrid Generative and Anomaly-Based Framework for Predictive Maintenance on Imbalanced Aviation Time-Series Data.”
-It provides everything needed to reproduce the results end-to-end: preprocessing, synthetic fault generation, classifier training, autoencoder analysis, and all uncertainty quantification experiments.
+A reproducible deep-learning pipeline for identifying pre-maintenance flights using NGAFID multivariate time-series data.
 
-The focus is a difficult binary task on NGAFID data:
-predicting whether a flight was healthy or likely to require maintenance soon.
+This repository accompanies the paper:
 
-The dataset is extremely imbalanced (≈ 8736 healthy vs. 30 faulty), so the repository includes the Bootstrap Crossover synthesis method used to balance the training distribution.
+“A Hybrid Generative and Anomaly-Based Framework for Predictive Maintenance on Imbalanced Aviation Time-Series Data.”
 
+It contains the full workflow needed to reproduce all results end-to-end:
+data preparation, residual-based synthetic fault generation, classifier training, anomaly autoencoder modeling, and the complete uncertainty-quantification analysis.
 
-NGAFID Dataset
+NGAFID Dataset Overview
 
-The National General Aviation Flight Information Database (NGAFID) provides non-simulated flight data from general aviation aircraft.
-The dataset includes:
+The National General Aviation Flight Information Database (NGAFID) provides non-simulated flight data from general-aviation aircraft.
 
-Multiple aircraft types
+This project focuses on a binary task:
 
-Flights from different seasons and environmental conditions
+Healthy Flights
 
-Associated maintenance logs
+Pre-Maintenance Flights (i.e., flights that later triggered a maintenance event)
 
-The faulty class consists of “pre-maintenance” flights — not catastrophic failures.
-These signatures are subtle and often similar to healthy flights, which is why uncertainty analysis is included in the pipeline.
+The challenge is the extreme class imbalance:
 
-How to Reproduce All Results
+~8,736 healthy
 
+~30 faulty
+
+Pre-maintenance signatures tend to be subtle and often resemble normal operation, which motivates the generative balancing and uncertainty-analysis methods implemented here.
+
+Reproducing the Pipeline
 Environment and Reproducibility
 
-All experiments in this repository were developed and executed inside a dedicated Conda environment.
+All experiments were executed inside a dedicated Conda environment running:
 
+Python 3.10.18
 
-The environment is based on Python 3.10.18 and includes all packages required to run the full pipeline (data preparation, synthetic generation, classifier, autoencoder, and uncertainty analysis).
+To make replication straightforward, three environment files are included:
 
-To make replication straightforward, three environment descriptions are provided:
+1. requirements.txt (pip-based)
 
----
-
-1. `requirements.txt
 Generated using:
 
-```bash
 pip freeze > requirements.txt
 
-2. environment.yml (clean, portable)
+
+Install with:
+
+pip install -r requirements.txt
+
+2. environment.yml (portable Conda environment)
 
 Exported with:
 
 conda env export --no-builds > environment.yml
 
 
-This version omits platform-specific build numbers and is the most reliable way to recreate the environment on another machine:
+Recreate with:
 
 conda env create -f environment.yml
-
-OR
+conda activate rapids_muhammad
 
 3. environment_with_builds.yml (exact snapshot)
 
-This is a full pointer-accurate copy of the environment, exported using:
+Exported with:
 
 conda env export > environment_with_builds.yml
 
 
-It captures the exact build variants present on the original Ubuntu workstation.
-Use this file only if you require bit-for-bit reproducibility:
+Recreate with:
 
 conda env create -f environment_with_builds.yml
+conda activate rapids_muhammad
 
-Recommended Workflow for Replication
 
-Clone this repository
+Use this version only if exact replication of the original Ubuntu system matters.
+
+Recommended Workflow
+
+Clone the repository:
 
 git clone https://github.com/muhammadnajjar14/Aviation-Predictive-Maintenance.git
 cd Aviation-Predictive-Maintenance
 
 
-Create the environment (choose one of the three options):
+Create and activate the environment (choose one of the three options above), then launch Jupyter:
 
-environment.yml for portability
-
-environment_with_builds.yml for exact reproduction
-
-requirements.txt for pip setups
-
-Launch the notebooks from inside the environment:
-
-conda activate [ENVIRONMENT NAME]
 jupyter notebook
 
+Pipeline Structure
 
-Run the notebooks in the order:
-
-01_Data_Preparation
-02_Classifier_and_Generation
-03_Anomaly_Autoencoder
-04_Hybrid_UQ_Analysis
-
-Each stage of the pipeline has a dedicated notebook.
+Run the notebooks in this order:
 
 1. Data Preparation
 
 notebooks/01_Data_Preparation.ipynb
 
-Load NGAFID flights
+Load NGAFID flight data
 
 Standardize using healthy training flights only
 
-Pad/truncate to fixed length
+Pad/truncate sequences to length 2048
 
-Export arrays for training
+Save structured arrays for training and evaluation
 
-2. Synthetic Fault Generation + Classifier Training
+2. Synthetic Generation + Classifier Training
 
 notebooks/02_Classifier_and_Generation.ipynb
 
-This notebook implements:
+Implements:
 
-Residual extraction
+Trend–residual decomposition
 
-Bootstrap Crossover synthesis
+Bootstrap Crossover synthesis to balance the data
 
-Balanced training set creation
+Dataset assembly for 1:1 class ratio
 
 Conv–BiLSTM classifier training
 
-Evaluation metrics: AUROC, AUPRC, F1
+Evaluation metrics: AUROC, AUPRC, Recall, F1
 
-. Autoencoder (Healthy-Only)
+3. Healthy-Only Anomaly Autoencoder
 
 notebooks/03_Anomaly_Autoencoder.ipynb
 
-Trains a convolutional autoencoder on healthy data only:
+Convolutional autoencoder trained only on healthy flights
 
-Calculate reconstruction error per flight
+Compute reconstruction error per sample
 
-Determine anomaly threshold from validation distribution
+Determine anomaly threshold from healthy validation distribution
 
-Save AE scores for hybrid analysis
+Export anomaly scores for hybrid analysis
 
-4. Uncertainty Quantification
+4. Uncertainty Quantification & Hybrid Analysis
 
 notebooks/04_Hybrid_UQ_Analysis.ipynb
 
 Contains:
 
-MC-Dropout evaluation
+MC-Dropout probability vs. uncertainty evaluation
 
-Probability vs. uncertainty scatter
+Scatter plots for correct vs. incorrect predictions
 
-Hybrid probability vs. AE error analysis
+Reconstruction-error analysis from the autoencoder
 
-All UQ figures from the paper
+Hybrid UQ plot combining classifier probability & AE anomaly score
 
-Key Results (Summary)
+All figures reported in the paper
 
-The Conv–BiLSTM achieves ≈ 85% recall on faulty flights.
+Key Results
 
-High false-positive rate → consistent with subtle pre-maintenance signatures.
+Conv–BiLSTM classifier achieves ≈ 85% recall on faulty flights.
 
-MC-Dropout uncertainties do not correlate with model errors.
+False positives remain common due to the subtle nature of pre-maintenance signatures.
 
-The healthy-only autoencoder treats faulty flights as in-distribution.
+MC-Dropout uncertainty does not correlate with model errors.
 
-Hybrid analysis shows no AE separation between false alarms and true faults.
+The healthy-only autoencoder treats most faulty flights as in-distribution.
 
-These patterns suggest that ambiguity is driven by the limits of the sensor set, not model capacity.
+Hybrid probability × reconstruction-error analysis shows no separation between true faults and false alarms.
+
+These behaviors point to intrinsic ambiguity in the available sensor channels, not model limitations.
 
 License
 
-This project is released under the MIT License.
+Released under the MIT License.
 
-Contribution
+Contributing
 
 Issues and pull requests are welcome.
-For major changes, please open an issue first to discuss the proposal.
+For major changes, please open an issue first so we can discuss them.
